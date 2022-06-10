@@ -1,9 +1,14 @@
 {
-  "config": {
-    "/dev/ttyS0": {
-      "items": [
-        {"type": ""}
-      ]
+  "modbus_rtu": {
+    "devices": {
+      "/dev/ttyUSB0": {
+        "clients": [
+          { "address": "0x0030", "driver": "renogy_rbt100lfp12s" },
+          { "address": "0x0031", "driver": "renogy_rbt100lfp12s" },
+          { "address": "0x0032", "driver": "renogy_rbt100lfp12s" },
+          { "address": "0x0033", "driver": "renogy_rbt100lfp12s" }
+        ]
+      }
     }
   }
 }
