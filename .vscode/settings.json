@@ -3,9 +3,13 @@
     "baudrate",
     "dataclass",
     "dbus",
+    "gettextcallback",
     "minimalmodbus",
     "modbus",
-    "renogy"
+    "renogy",
+    "vedbus",
+    "velib",
+    "victronenergy"
   ],
   "python.formatting.provider": "black"
 }
