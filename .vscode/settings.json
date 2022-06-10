@@ -1,0 +1,11 @@
+{
+  "cSpell.words": [
+    "baudrate",
+    "dataclass",
+    "dbus",
+    "minimalmodbus",
+    "modbus",
+    "renogy"
+  ],
+  "python.formatting.provider": "black"
+}

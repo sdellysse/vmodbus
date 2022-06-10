@@ -1,0 +1,9 @@
+{
+  "config": {
+    "/dev/ttyS0": {
+      "items": [
+        {"type": ""}
+      ]
+    }
+  }
+}
