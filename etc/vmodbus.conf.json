@@ -1,5 +1,6 @@
 {
   "modbus_rtu": {
+    "poll_interval_ms": 1000,
     "devices": {
       "/dev/ttyUSB0": {
         "clients": [
