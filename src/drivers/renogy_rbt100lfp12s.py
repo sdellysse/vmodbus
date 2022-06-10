@@ -5,6 +5,9 @@ import minimalmodbus
 
 import opt.velib.vedbus
 
+MODBUS_BAUD_RATE = 9600
+MODBUS_TIMEOUT = 0.2
+
 
 @dataclass(frozen=True)
 class Metadata:

@@ -19,10 +19,6 @@ PROCESS_VERSION = "0.0.2022-06-09"
 DEV_PATHNAME = "/dev/ttyUSB0"
 BATTERY_ADDRESSES = [0x0030, 0x0031, 0x0032, 0x0033]
 POLL_INTERVAL = 1_000
-MODBUS_BAUD_RATE = 9600
-MODBUS_TIMEOUT = 0.2
-
-setup_once = minimalmodbus.Instrument(DEV_PATHNAME, 0, close_port_after_each_call=True)
 
 
 @dataclass(frozen=True)
@@ -44,8 +40,8 @@ for address in BATTERY_ADDRESSES:
         address,
         close_port_after_each_call=True,
     )
-    modbus.serial.baudrate = MODBUS_BAUD_RATE
-    modbus.serial.timeout = MODBUS_TIMEOUT
+    modbus.serial.baudrate = src.drivers.renogy_rbt100lfp12s.MODBUS_BAUD_RATE
+    modbus.serial.timeout = src.drivers.renogy_rbt100lfp12s.MODBUS_TIMEOUT
 
     metadata = src.drivers.renogy_rbt100lfp12s.metadata(modbus)
     pprint(metadata)
