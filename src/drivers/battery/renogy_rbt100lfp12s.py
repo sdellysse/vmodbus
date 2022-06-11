@@ -1,5 +1,7 @@
+from asyncore import write
 from dataclasses import dataclass
 from typing import List
+from webbrowser import get
 import minimalmodbus
 
 
@@ -43,12 +45,14 @@ def setup(address: int, dev_pathname: str, process_name: str, process_version: s
     maximum_discharge_current_a = modbus.read_register(0x13BC, signed=True) * 0.01
 
     service = opt.velib.vedbus.VeDbusService(
-        f"com.victronenergy.{dev_pathname}_{address}"
+        f"com.victronenergy.battery.{dev_pathname}_{address}"
     )
 
     # static paths
     service.add_path("/Connected", 1)
-    service.add_path("/DeviceInstance", f"{address}@{dev_pathname}")
+    service.add_path("/DeviceInstance", f"{dev_pathname}_{address}")
+    service.add_path("/FirmwareVersion", software_version)
+    service.add_path("/HardwareVersion", manufacturer_version)
     service.add_path(
         "/Info/BatteryLowVoltage",
         low_voltage_limit_v,
@@ -81,8 +85,9 @@ def setup(address: int, dev_pathname: str, process_name: str, process_version: s
         "/ProductId", 0x0000
     )  # TODO Cannot find `products.c` this references
     service.add_path("/ProductName", f"RBT100LFP12S: {serial}")
+    service.add_path("/System/NrOfCells", cell_count)
     service.add_path("/System/NrOfCellsPerBattery", cell_count)
-    service.add_path("/System/NrOfModulesOnline", cell_count)  # TODO check
+    service.add_path("/System/NrOfModulesOnline", 1)  # TODO check
     service.add_path("/System/NrOfModulesOffline", 0)  # TODO check
     service.add_path("/System/NrOfModulesBlockingCharge", 0)  # TODO check
     service.add_path("/System/NrOfModulesBlockingDischarge", 0)  # TODO check
@@ -101,12 +106,33 @@ def setup(address: int, dev_pathname: str, process_name: str, process_version: s
     service.add_path("/Alarms/LowVoltage", None, writeable=True)
     service.add_path("/Alarms/LowChargeTemperature", None, writeable=True)
     service.add_path("/Alarms/LowTemperature", None, writeable=True)
+    for index in range(cell_count):
+        service.add_path(f"/Balances/Cell{index}", None, writeable=True)
     service.add_path("/Balancing", None, writeable=True)
     service.add_path(
         "/Capacity",
         None,
         writeable=True,
         gettextcallback=lambda _path, value: "{:0.2f}Ah".format(value),
+    )
+    for index in range(cell_count):
+        service.add_path(
+            f"/Cell/{index + 1}/Volts",
+            None,
+            writeable=True,
+            gettextcallback=lambda _path, value: "{:0.3f}V".format(value),
+        )
+    service.add_path(
+        "/Cell/Diff",
+        None,
+        writeable=True,
+        gettextcallback=lambda _path, value: "{:0.3f}V".format(value),
+    )
+    service.add_path(
+        "/Cell/Sum",
+        None,
+        writeable=True,
+        gettextcallback=lambda _path, value: "{:0.3f}V".format(value),
     )
     service.add_path(
         "/Dc/0/Current",
@@ -132,6 +158,7 @@ def setup(address: int, dev_pathname: str, process_name: str, process_version: s
     service.add_path("/Io/AllowToCharge", None, writeable=True)
     service.add_path("/Soc", None, writeable=True)
     service.add_path("/System/MaxCellTemperature", None, writeable=True)
+    service.add_path("/System/MaxTemperatureCellId", None, writeable=True)
     service.add_path("/System/MaxVoltageCellId", None, writeable=True)
     service.add_path("/System/MinCellTemperature", None, writeable=True)
     service.add_path(
@@ -140,7 +167,27 @@ def setup(address: int, dev_pathname: str, process_name: str, process_version: s
         writeable=True,
         gettextcallback=lambda _path, value: "{:0.3f}V".format(value),
     )
+    service.add_path("/System/MinTemperatureCellId", None, writeable=True)
     service.add_path("/System/MinVoltageCellId", None, writeable=True)
+    for index in range(cell_count):
+        service.add_path(
+            f"/Voltages/Cell{index + 1}",
+            None,
+            writeable=True,
+            gettextcallback=lambda _path, value: "{:0.3f}V".format(value),
+        )
+    service.add_path(
+        "/Voltages/Diff",
+        None,
+        writeable=True,
+        gettextcallback=lambda _path, value: "{:0.3f}V".format(value),
+    )
+    service.add_path(
+        "/Voltages/Sum",
+        None,
+        writeable=True,
+        gettextcallback=lambda _path, value: "{:0.3f}V".format(value),
+    )
 
     return Payload(
         address=address,
@@ -187,6 +234,10 @@ def update(payload: Payload):
     )
 
     payload.service["/Capacity"] = capacity_ah
+    for index in range(payload.cell_count):
+        payload.service[f"/Cell/{index + 1}/Volts"] = cell_voltages_v[index]
+    payload.service["/Cell/Diff"] = max(cell_voltages_v) - min(cell_voltages_v)
+    payload.service["/Cell/Sum"] = sum(cell_voltages_v)
     payload.service["/Dc/0/Current"] = current_a
     payload.service["/Dc/0/Power"] = current_a * voltage_v
     payload.service["/Dc/0/Temperature"] = bms_temp_c
@@ -201,3 +252,7 @@ def update(payload: Payload):
     payload.service["/System/MinVoltageCellId"] - cell_voltages_v.index(
         min(cell_voltages_v)
     )
+    for index in range(payload.cell_count):
+        payload.service[f"/Voltages/Cell{index + 1}"] = cell_voltages_v[index]
+    payload.service["/Voltages/Diff"] = max(cell_voltages_v) - min(cell_voltages_v)
+    payload.service["/Voltages/Sum"] = sum(cell_voltages_v)

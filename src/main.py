@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import List
 from time import sleep
 
-import src.drivers.renogy_rbt100lfp12s
+import src.drivers.battery.renogy_rbt100lfp12s
 
 PROCESS_NAME = "VModbus"
 PROCESS_VERSION = "0.0.2022-06-09"
@@ -30,10 +30,10 @@ DEVICE_DEFS: List[DeviceDef] = [
     DeviceDef(
         dev_pathname="/dev/ttyUSB0",
         client_defs=[
-            ClientDef(address=0x0030, driver="renogy_rbt100lfp12s"),
-            ClientDef(address=0x0031, driver="renogy_rbt100lfp12s"),
-            ClientDef(address=0x0032, driver="renogy_rbt100lfp12s"),
-            ClientDef(address=0x0033, driver="renogy_rbt100lfp12s"),
+            ClientDef(address=0x0030, driver="battery.renogy_rbt100lfp12s"),
+            ClientDef(address=0x0031, driver="battery.renogy_rbt100lfp12s"),
+            ClientDef(address=0x0032, driver="battery.renogy_rbt100lfp12s"),
+            ClientDef(address=0x0033, driver="battery.renogy_rbt100lfp12s"),
         ],
     )
 ]
@@ -51,11 +51,11 @@ for device_def in DEVICE_DEFS:
     print(f"<<<registering modbus: {device_def.dev_pathname}>>>")
 
     for client_def in device_def.client_defs:
-        if client_def.driver == "renogy_rbt100lfp12s":
+        if client_def.driver == "battery.renogy_rbt100lfp12s":
             clients.append(
                 Client(
-                    driver="renogy_rbt100lfp12s",
-                    payload=src.drivers.renogy_rbt100lfp12s.setup(
+                    driver="battery.renogy_rbt100lfp12s",
+                    payload=src.drivers.battery.renogy_rbt100lfp12s.setup(
                         address=client_def.address,
                         dev_pathname=device_def.dev_pathname,
                         process_name=PROCESS_NAME,
@@ -67,7 +67,7 @@ for device_def in DEVICE_DEFS:
 while True:
     print("<<<polling>>>")
     for client in clients:
-        if client.driver == "renogy_rbt100lfp12s":
-            src.drivers.renogy_rbt100lfp12s.update(client.payload)
+        if client.driver == "battery.renogy_rbt100lfp12s":
+            src.drivers.battery.renogy_rbt100lfp12s.update(client.payload)
 
     sleep(POLL_INTERVAL / 1_000)
